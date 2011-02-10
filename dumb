@@ -1,0 +1,123 @@
+
+function getGets(){
+	if(isset($_GET['s_d']))	$s_d = $_GET['s_d'];
+	if(isset($_GET['s_m']))	$s_m = $_GET['s_m'];
+	if(isset($_GET['s_y']))	$s_y = $_GET['s_y'];
+	if(isset($_GET['e_d']))	$e_d = $_GET['e_d'];
+	if(isset($_GET['e_m']))	$e_m = $_GET['e_m'];
+	if(isset($_GET['e_y']))	$e_y = $_GET['e_y'];
+	if(isset($_GET['border']))	$this->border = $_GET['border'];
+	if(isset($_GET['transparent']))	$this->transparent = $_GET['transparent'];
+
+
+	if(isset($s_d)){
+		$this->start = mktime(0,0,0, $s_m, $s_d, $s_y);
+	} else {
+		$this->start = "first";
+	}
+	if(isset($e_d)){
+		$this->stop = mktime(0,0,0, $e_m, $e_d, $e_y);
+	} else {
+		$this->stop = time();
+	}
+	switch($_GET['type']){
+		case "custom":
+			$this->gType = self::CUSTOM;
+			$sEnd = "from " . date("d-m-Y", $this->start) . " to " . date("d-m-Y", $this->stop);
+			break;
+		case "last_24_hours":
+			$this->start = mktime(date("H"),0,0)-DAY;
+			$this->interval = HOUR;
+			$this->gType = self::LAST_24_HOURS;
+			$sEnd = "the last 24 hours";
+			break;
+		case "average":
+			$this->gType = self::AVERAGE;
+			$sEnd = "averagely on a day";
+			break;
+		default:
+			$this->start = "first";
+			$this->interval = DAY;
+			$this->gType = self::ALL;
+			$sEnd = "all time";
+			break;
+				
+	}
+
+	if(isset($_GET['int'])){
+		if($_GET['int'] == "day"){
+			$this->interval = DAY;
+		} else {
+			$this->interval = $_GET['int'];
+		}
+
+	}
+	if(isset($_GET[unique])){
+		$ss = "Unique visits";
+		$this->isUnique = true;
+	} else {
+		$ss = "Activity";
+		$this->isUnique = false;
+	}
+
+	$this->title = $ss . " " . $sEnd;
+
+}
+
+
+function getData()
+{
+	if(($this->start == "first") || ($this->start == 0)){
+		$sql = "SELECT time FROM `activity_log` ORDER BY time ASC";
+		$result = mysql_query($sql) or die("unable to comply my lord");
+		$array = mysql_fetch_array($result, MYSQL_ASSOC);
+		$d = date("d",$array['time']);
+		$m = date("m",$array['time']);
+		$y = date("y",$array['time']);
+		//$array['time'] . " " . time() . " ";
+		$this->start = mktime(0,0,0,$m, $d - 1,$y);
+	}
+	if($this->stop == 0){
+		$this->stop = time();
+	}
+	if($this->interval == 0){
+		$this->interval = $this->stop - $this->start;
+	}
+	$nodes = array();
+	$steps = ceil((time() - $this->start)/$this->interval);
+	for($i = 0;$i<$steps;$i++){
+		$start = $this->interval*$i + $this->start;
+		$end = $this->interval*($i + 1) + $this->start;
+		if($end <= $this->stop + $this->interval){
+			$sql = "SELECT * FROM `activity_log` WHERE time>='{$start}' and time<'{$end}'";
+			$result = mysql_query($sql) or die("unable to comply my lord");
+			while ($array = mysql_fetch_array($result, MYSQL_ASSOC)) {
+				if($this->isUnique === true){
+					$temp[$array['ip']] = true;
+				} elseif($this->gType == self::AVERAGE) {
+					$temp[date("H", $array['time'])]++;
+				} else {
+					$temp[] = true;
+				}
+			}
+		}
+		if($this->gType == self::AVERAGE) {
+				
+			for($i = 0; $i<24; $i++){
+				$nodes[] = $temp[$i];
+				$keys[] = mktime($i,0,0);
+			}
+		}	else {
+			$nodes[] = sizeof($temp);
+			$temp = array();
+			$keys[] = $start;
+		}
+		//var_dump($nodes);
+	}
+
+	$this->keys = $keys;
+	$this->values = $nodes;
+
+}
+
+
