@@ -145,11 +145,9 @@ class Graph
 		{
 			
 			
-			if($this->gType == self::AVERAGE){
-				$i = $ii%$this->columns;
-			} else {
-				$i = $ii;
-			}
+		
+			$i = $ii;
+			
 			
 			// Calculates the column height	
 			$colHeight = (G_HEIGHT / 100) * (( $this->values[$i] / ($multi*$hpl)) *100);
@@ -164,34 +162,7 @@ class Graph
 
 			// Determines when to write the Keys. 
 			$div = 1; //
-/*
-			if($this->gType === self::LAST_24_HOURS){
-				$s = $today = date("H:i", $this->keys[$i] + $this->interval);
-				$div = 2;
-				if($this->interval == 60){
-					$s = $today = date("H:i", $this->keys[$i] + $this->interval);
-					$div = ceil($this->columns/13);
-				}
-			}elseif($this->gType === self::AVERAGE){
-				$s = $today = date("H:i", $this->keys[$i] + HOUR);
-				$div = 2;
-			}elseif($this->interval == DAY){
-				$s = date("j. F Y", $this->keys[$i]); // . "(". $this->values[$i] . ")"
-				$div = ceil($this->columns/16);
-			}elseif($this->interval == HOUR){
-				$s = showtime($this->keys[$i] + $this->interval); // . "(". $this->values[$i] . ")"
-				$div = ceil($this->columns/16);
-			}
-			 else {
-				$s = showtime($this->keys[$i]); // . "(". $this->values[$i] . ")"
-				$div = ceil($this->columns/16);
-			}
-			*/
-				//$s = date("j. F Y", $this->keys[$ii]); // . "(". $this->values[$i] . ")"
-				//$div = ceil($this->columns/16);
-		//	$div = ceil($this->columns/16);
-		
-		
+
 			if(($ii)%$div == 0){
 				
 				imagettftext($this->im, 9, 300, $x[$ii] - 6, $this->y2 + 8, $this->c['black'], $this->font, $this->keys[$ii]);
